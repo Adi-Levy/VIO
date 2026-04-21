@@ -2,9 +2,12 @@
 
 namespace vio {
 
-enum class EstimatorState {
-	kUninitialized,
-	kInitialized,
+enum class RuntimeStatus {
+    kWaitingForData,
+    kInitializing,
+    kTracking,
+    kDegraded,
+    kLost,
 };
 
 }  // namespace vio

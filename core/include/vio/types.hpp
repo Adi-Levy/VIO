@@ -41,7 +41,7 @@ struct PinholeIntrinsics {
 };
 
 // Distortion coefficients for the camera model.
-// The exact interpretation depends on the calibration / frontend code.
+// The exact interpretation depends on the calibration / visual processing code.
 // For v1 this can store the OpenCV-style distortion vector.
 struct DistortionCoeffs {
     std::vector<double> coeffs{};
