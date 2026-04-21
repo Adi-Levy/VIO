@@ -1,21 +1,10 @@
 #include "feature_detector.hpp"
 
+#include "utils/validation.hpp"
+
 #include <opencv2/imgproc.hpp>
 
 namespace vio {
-
-namespace {
-
-bool IsSupportedGrayscaleImage(const cv::Mat& image_gray,
-                               std::uint32_t min_image_width,
-                               std::uint32_t min_image_height) {
-    return !image_gray.empty() &&
-           image_gray.type() == CV_8UC1 &&
-           image_gray.cols >= static_cast<int>(min_image_width) &&
-           image_gray.rows >= static_cast<int>(min_image_height);
-}
-
-}  // namespace
 
 FeatureDetector::FeatureDetector(const Config& config)
     : visual_processing_config_(config.visual_processing),
@@ -25,7 +14,7 @@ FeatureDetector::FeatureDetector(const Config& config)
 FeatureDetectionResult FeatureDetector::Detect(const cv::Mat& image_gray) const {
     FeatureDetectionResult result;
 
-    if (!IsSupportedGrayscaleImage(
+    if (!IsSupportedTrackingImage(
             image_gray, min_image_width_, min_image_height_)) {
         return result;
     }

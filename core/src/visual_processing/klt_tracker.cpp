@@ -1,19 +1,12 @@
 #include "klt_tracker.hpp"
 
+#include "utils/validation.hpp"
+
 #include <opencv2/video/tracking.hpp>
 
 namespace vio {
 
 namespace {
-
-bool IsSupportedGrayscaleImage(const cv::Mat& image_gray,
-                               std::uint32_t min_image_width,
-                               std::uint32_t min_image_height) {
-    return !image_gray.empty() &&
-           image_gray.type() == CV_8UC1 &&
-           image_gray.cols >= static_cast<int>(min_image_width) &&
-           image_gray.rows >= static_cast<int>(min_image_height);
-}
 
 cv::Size BuildWindowSize(const KltTrackingConfig& tracking_config) {
     return cv::Size(tracking_config.window_size_px, tracking_config.window_size_px);
@@ -38,12 +31,12 @@ KltTrackResult KltTracker::Track(const cv::Mat& previous_image_gray,
     KltTrackResult result;
 
     if (previous_points.empty() ||
-        !IsSupportedGrayscaleImage(previous_image_gray,
-                                   min_image_width_,
-                                   min_image_height_) ||
-        !IsSupportedGrayscaleImage(current_image_gray,
-                                   min_image_width_,
-                                   min_image_height_)) {
+        !IsSupportedTrackingImage(previous_image_gray,
+                                  min_image_width_,
+                                  min_image_height_) ||
+        !IsSupportedTrackingImage(current_image_gray,
+                                  min_image_width_,
+                                  min_image_height_)) {
         return result;
     }
 

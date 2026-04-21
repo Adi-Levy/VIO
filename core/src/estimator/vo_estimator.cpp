@@ -1,20 +1,10 @@
 #include "vo_estimator.hpp"
 
+#include "utils/validation.hpp"
+
 #include <utility>
 
 namespace vio {
-
-namespace {
-
-bool IsImageFrameValid(const ImageFrame& frame, const Config& config) {
-    return !frame.image_gray.empty() &&
-           frame.image_gray.cols >=
-               static_cast<int>(config.min_image_width) &&
-           frame.image_gray.rows >=
-               static_cast<int>(config.min_image_height);
-}
-
-}  // namespace
 
 VioEstimator::VioEstimator(Config config) : config_(std::move(config)) {}
 
@@ -22,7 +12,9 @@ bool VioEstimator::ProcessImageFrame(const ImageFrame& frame) {
     latest_estimate_.timestamp_ns = frame.timestamp_ns;
     latest_estimate_.valid = false;
 
-    if (!IsImageFrameValid(frame, config_)) {
+    if (!IsSupportedTrackingImage(frame.image_gray,
+                                  config_.min_image_width,
+                                  config_.min_image_height)) {
         latest_diagnostics_.runtime_status = RuntimeStatus::kWaitingForData;
         latest_diagnostics_.pose_recovery_success = false;
         latest_diagnostics_.triangulation_success = false;

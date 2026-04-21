@@ -1,7 +1,10 @@
 #pragma once
 
+#include <opencv2/core.hpp>
+#include <opencv2/core/mat.hpp>
+
 namespace vio {
 
-void image_utils_translation_unit_anchor();
+bool IsGrayscaleImage(const cv::Mat& image);
 
 }  // namespace vio

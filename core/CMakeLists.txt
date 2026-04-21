@@ -1,5 +1,4 @@
 set(VIO_CORE_SOURCES
-    src/empty.cpp
     src/estimator/vo_estimator.cpp
     src/estimator/vo_state_manager.cpp
     src/visual_processing/feature_detector.cpp
@@ -20,6 +19,8 @@ add_library(vio_core ${VIO_CORE_SOURCES})
 target_include_directories(vio_core
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
 target_link_libraries(vio_core
