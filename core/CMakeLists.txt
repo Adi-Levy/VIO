@@ -13,7 +13,7 @@ set(VIO_CORE_SOURCES
 )
 
 find_package(Eigen3 REQUIRED)
-find_package(OpenCV REQUIRED COMPONENTS core)
+find_package(OpenCV REQUIRED COMPONENTS core imgproc video)
 
 add_library(vio_core ${VIO_CORE_SOURCES})
 
@@ -26,6 +26,8 @@ target_link_libraries(vio_core
     PUBLIC
         Eigen3::Eigen
         opencv_core
+        opencv_imgproc
+        opencv_video
 )
 
 add_subdirectory(tests)
