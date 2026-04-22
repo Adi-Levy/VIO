@@ -1,3 +1,5 @@
+#include <gtest/gtest.h>
+
 #include "visual_processing/feature_detector.hpp"
 #include "visual_processing/klt_tracker.hpp"
 
@@ -29,7 +31,7 @@ cv::Mat TranslateImage(const cv::Mat& image, double dx, double dy) {
     return translated;
 }
 
-bool TracksTranslatedFeatures() {
+TEST(KltTrackerTest, TracksTranslatedFeatures) {
     vio::Config config;
     config.visual_processing.max_features = 20;
     config.visual_processing.min_feature_distance_px = 5.0;
@@ -45,18 +47,14 @@ bool TracksTranslatedFeatures() {
 
     const vio::FeatureDetector detector(config);
     const auto detection_result = detector.Detect(previous_image);
-    if (detection_result.Count() < 4) {
-        return false;
-    }
+    ASSERT_GE(detection_result.Count(), 4U);
 
     const vio::KltTracker tracker(config);
     const auto track_result =
         tracker.Track(previous_image, current_image, detection_result.points);
 
-    if (track_result.tracked_count < 4 ||
-        track_result.tracked_count > detection_result.Count()) {
-        return false;
-    }
+    EXPECT_GE(track_result.tracked_count, 4U);
+    EXPECT_LE(track_result.tracked_count, detection_result.Count());
 
     for (std::size_t i = 0; i < track_result.valid_mask.size(); ++i) {
         if (track_result.valid_mask[i] == 0) {
@@ -65,24 +63,22 @@ bool TracksTranslatedFeatures() {
 
         const auto delta =
             track_result.current_points[i] - track_result.previous_points[i];
-        if (std::abs(delta.x - 4.0f) > 0.75f || std::abs(delta.y - 3.0f) > 0.75f) {
-            return false;
-        }
+        EXPECT_NEAR(delta.x, 4.0f, 0.75f);
+        EXPECT_NEAR(delta.y, 3.0f, 0.75f);
     }
-
-    return true;
 }
 
-bool RejectsEmptyInputs() {
+TEST(KltTrackerTest, RejectsEmptyInputs) {
     const vio::KltTracker tracker(vio::Config{});
     const auto result = tracker.Track(cv::Mat{}, cv::Mat{}, {});
-    return result.tracked_count == 0 &&
-           result.previous_points.empty() &&
-           result.current_points.empty() &&
-           result.valid_mask.empty();
+
+    EXPECT_EQ(result.tracked_count, 0U);
+    EXPECT_TRUE(result.previous_points.empty());
+    EXPECT_TRUE(result.current_points.empty());
+    EXPECT_TRUE(result.valid_mask.empty());
 }
 
-bool RejectsTooSmallImages() {
+TEST(KltTrackerTest, RejectsTooSmallImages) {
     vio::Config config;
     config.min_image_width = 32;
     config.min_image_height = 32;
@@ -93,18 +89,9 @@ bool RejectsTooSmallImages() {
     const vio::KltTracker tracker(config);
     const auto result = tracker.Track(small_image, small_image, points);
 
-    return result.tracked_count == 0 &&
-           result.previous_points.empty() &&
-           result.current_points.empty() &&
-           result.valid_mask.empty();
+    EXPECT_EQ(result.tracked_count, 0U);
+    EXPECT_TRUE(result.previous_points.empty());
+    EXPECT_TRUE(result.current_points.empty());
+    EXPECT_TRUE(result.valid_mask.empty());
 }
-
 }  // namespace
-
-int main() {
-    return (TracksTranslatedFeatures() &&
-            RejectsEmptyInputs() &&
-            RejectsTooSmallImages())
-               ? 0
-               : 1;
-}

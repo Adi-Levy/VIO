@@ -1,3 +1,5 @@
+#include <gtest/gtest.h>
+
 #include "visual_processing/feature_detector.hpp"
 
 #include <opencv2/core/mat.hpp>
@@ -13,7 +15,7 @@ cv::Mat CreateCornerRichImage() {
     return image;
 }
 
-bool DetectsFeaturesOnStructuredImage() {
+TEST(FeatureDetectorTest, DetectsFeaturesOnStructuredImage) {
     vio::Config config;
     config.visual_processing.max_features = 20;
     config.visual_processing.min_feature_distance_px = 5.0;
@@ -23,17 +25,18 @@ bool DetectsFeaturesOnStructuredImage() {
     const vio::FeatureDetector detector(config);
     const auto result = detector.Detect(CreateCornerRichImage());
 
-    return result.Count() >= 4 && result.Count() <= config.visual_processing.max_features;
+    EXPECT_GE(result.Count(), 4U);
+    EXPECT_LE(result.Count(), config.visual_processing.max_features);
 }
 
-bool ReturnsNoFeaturesForEmptyImage() {
+TEST(FeatureDetectorTest, ReturnsNoFeaturesForEmptyImage) {
     const vio::FeatureDetector detector(vio::Config{});
     const auto result = detector.Detect(cv::Mat{});
 
-    return result.Count() == 0;
+    EXPECT_EQ(result.Count(), 0U);
 }
 
-bool ReturnsNoFeaturesForTooSmallImage() {
+TEST(FeatureDetectorTest, ReturnsNoFeaturesForTooSmallImage) {
     vio::Config config;
     config.min_image_width = 32;
     config.min_image_height = 32;
@@ -41,15 +44,6 @@ bool ReturnsNoFeaturesForTooSmallImage() {
     const vio::FeatureDetector detector(config);
     const auto result = detector.Detect(cv::Mat::zeros(16, 16, CV_8UC1));
 
-    return result.Count() == 0;
+    EXPECT_EQ(result.Count(), 0U);
 }
-
 }  // namespace
-
-int main() {
-    return (DetectsFeaturesOnStructuredImage() &&
-            ReturnsNoFeaturesForEmptyImage() &&
-            ReturnsNoFeaturesForTooSmallImage())
-               ? 0
-               : 1;
-}

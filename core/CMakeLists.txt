@@ -13,6 +13,15 @@ set(VIO_CORE_SOURCES
 
 find_package(Eigen3 REQUIRED)
 find_package(OpenCV REQUIRED COMPONENTS core imgproc video)
+find_package(GTest CONFIG QUIET)
+if(NOT GTest_FOUND)
+    find_package(GTest QUIET)
+endif()
+if(NOT GTest_FOUND)
+    message(FATAL_ERROR
+        "GTest was not found. On Ubuntu 22.04 install it with: sudo apt install libgtest-dev"
+    )
+endif()
 
 add_library(vio_core ${VIO_CORE_SOURCES})
 

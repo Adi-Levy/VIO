@@ -1,22 +1,14 @@
+#include <gtest/gtest.h>
+
 #include <vio/vio_estimator.hpp>
 
-int main() {
+TEST(VioEstimatorTest, DefaultStateStartsWaitingForData) {
     vio::VioEstimator estimator;
 
     const auto& estimate = estimator.GetLatestEstimate();
     const auto& diagnostics = estimator.GetLatestDiagnostics();
 
-    if (estimate.timestamp_ns != 0) {
-        return 1;
-    }
-
-    if (estimate.valid) {
-        return 1;
-    }
-
-    if (diagnostics.runtime_status != vio::RuntimeStatus::kWaitingForData) {
-        return 1;
-    }
-
-    return 0;
+    EXPECT_EQ(estimate.timestamp_ns, 0);
+    EXPECT_FALSE(estimate.valid);
+    EXPECT_EQ(diagnostics.runtime_status, vio::RuntimeStatus::kWaitingForData);
 }

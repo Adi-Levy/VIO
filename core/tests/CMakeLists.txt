@@ -1,55 +1,45 @@
-add_executable(vio_core_estimator_default_state_test estimator_default_state_test.cpp)
-target_link_libraries(vio_core_estimator_default_state_test PRIVATE vio_core)
+include(GoogleTest)
 
-add_executable(vio_core_estimator_valid_frame_test estimator_valid_frame_test.cpp)
-target_link_libraries(vio_core_estimator_valid_frame_test PRIVATE vio_core)
+function(add_vio_gtest target_name source_file)
+    add_executable(${target_name} ${source_file})
+    target_link_libraries(${target_name}
+        PRIVATE
+            vio_core
+            GTest::gtest
+            GTest::gtest_main
+    )
+    gtest_discover_tests(${target_name})
+endfunction()
 
-add_executable(vio_core_estimator_invalid_frame_test estimator_invalid_frame_test.cpp)
-target_link_libraries(vio_core_estimator_invalid_frame_test PRIVATE vio_core)
+function(add_vio_internal_gtest target_name source_file)
+    add_vio_gtest(${target_name} ${source_file})
+    target_include_directories(${target_name}
+        PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/../src
+    )
+endfunction()
 
-add_executable(vio_core_estimator_reset_test estimator_reset_test.cpp)
-target_link_libraries(vio_core_estimator_reset_test PRIVATE vio_core)
-
-add_executable(vio_core_feature_detector_test feature_detector_test.cpp)
-target_include_directories(vio_core_feature_detector_test
-    PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/../src
+add_vio_gtest(
+    vio_core_estimator_default_state_test
+    estimator_default_state_test.cpp
 )
-target_link_libraries(vio_core_feature_detector_test PRIVATE vio_core)
-
-add_executable(vio_core_klt_tracker_test klt_tracker_test.cpp)
-target_include_directories(vio_core_klt_tracker_test
-    PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/../src
+add_vio_gtest(
+    vio_core_estimator_valid_frame_test
+    estimator_valid_frame_test.cpp
 )
-target_link_libraries(vio_core_klt_tracker_test PRIVATE vio_core)
-
-add_test(
-    NAME vio_core_estimator_default_state_test
-    COMMAND vio_core_estimator_default_state_test
+add_vio_gtest(
+    vio_core_estimator_invalid_frame_test
+    estimator_invalid_frame_test.cpp
 )
-
-add_test(
-    NAME vio_core_estimator_valid_frame_test
-    COMMAND vio_core_estimator_valid_frame_test
+add_vio_gtest(
+    vio_core_estimator_reset_test
+    estimator_reset_test.cpp
 )
-
-add_test(
-    NAME vio_core_estimator_invalid_frame_test
-    COMMAND vio_core_estimator_invalid_frame_test
+add_vio_internal_gtest(
+    vio_core_feature_detector_test
+    feature_detector_test.cpp
 )
-
-add_test(
-    NAME vio_core_estimator_reset_test
-    COMMAND vio_core_estimator_reset_test
-)
-
-add_test(
-    NAME vio_core_feature_detector_test
-    COMMAND vio_core_feature_detector_test
-)
-
-add_test(
-    NAME vio_core_klt_tracker_test
-    COMMAND vio_core_klt_tracker_test
+add_vio_internal_gtest(
+    vio_core_klt_tracker_test
+    klt_tracker_test.cpp
 )
