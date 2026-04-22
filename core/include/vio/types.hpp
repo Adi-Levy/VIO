@@ -15,6 +15,7 @@ using TimestampNs = std::int64_t;
 // A single grayscale image frame.
 // The image is expected to be single-channel. Validation can be enforced
 // by the caller or in the estimator implementation.
+// During processing, the image is treated as read-only input.
 struct ImageFrame {
     TimestampNs timestamp_ns{0};
     cv::Mat image_gray{};

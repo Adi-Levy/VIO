@@ -47,6 +47,13 @@ To avoid confusion with web-development terminology:
 - IMU is required for metric scale in VIO mode
 - Core library should remain ROS-independent
 
+### Image buffer handling
+- Input image buffers are treated as immutable during processing
+- Processing functions should take image inputs by const reference where practical
+- Any operation that requires modification should create a separate derived buffer
+- Avoid unnecessary `clone()` calls or other deep copies
+- `ImageFrame.image_gray` is expected to remain a valid grayscale image handle/view for the duration of processing
+
 ## 5. Architecture overview
 
 ```text
