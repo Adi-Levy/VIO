@@ -28,9 +28,11 @@ struct KltTrackingConfig {
 };
 
 struct GeometryConfig {
+    std::uint32_t min_correspondence_count{5};
     double ransac_reprojection_threshold_px{1.0};
     double ransac_confidence{0.999};
     std::uint32_t min_inlier_count{25};
+    bool require_points_within_image_bounds{true};
 };
 
 struct Phase1VoConfig {

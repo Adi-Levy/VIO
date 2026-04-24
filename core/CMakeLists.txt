@@ -12,7 +12,7 @@ set(VIO_CORE_SOURCES
 )
 
 find_package(Eigen3 REQUIRED)
-find_package(OpenCV REQUIRED COMPONENTS core imgproc video)
+find_package(OpenCV REQUIRED COMPONENTS core imgproc video calib3d)
 find_package(GTest CONFIG QUIET)
 if(NOT GTest_FOUND)
     find_package(GTest QUIET)
@@ -36,6 +36,7 @@ target_link_libraries(vio_core
     PUBLIC
         Eigen3::Eigen
         opencv_core
+        opencv_calib3d
         opencv_imgproc
         opencv_video
 )

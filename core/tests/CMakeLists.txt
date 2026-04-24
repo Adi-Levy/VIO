@@ -43,3 +43,11 @@ add_vio_internal_gtest(
     vio_core_klt_tracker_test
     klt_tracker_test.cpp
 )
+add_vio_internal_gtest(
+    vio_core_essential_matrix_solver_test
+    essential_matrix_solver_test.cpp
+)
+add_vio_internal_gtest(
+    vio_core_pose_recovery_test
+    pose_recovery_test.cpp
+)
