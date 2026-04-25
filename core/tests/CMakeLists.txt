@@ -20,20 +20,8 @@ function(add_vio_internal_gtest target_name source_file)
 endfunction()
 
 add_vio_gtest(
-    vio_core_estimator_default_state_test
-    estimator_default_state_test.cpp
-)
-add_vio_gtest(
-    vio_core_estimator_valid_frame_test
-    estimator_valid_frame_test.cpp
-)
-add_vio_gtest(
-    vio_core_estimator_invalid_frame_test
-    estimator_invalid_frame_test.cpp
-)
-add_vio_gtest(
-    vio_core_estimator_reset_test
-    estimator_reset_test.cpp
+    vio_core_estimator_test
+    estimator_test.cpp
 )
 add_vio_internal_gtest(
     vio_core_feature_detector_test
