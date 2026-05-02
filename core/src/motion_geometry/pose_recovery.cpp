@@ -9,21 +9,17 @@
 namespace vio {
 
 PoseRecovery::PoseRecovery(const Config& config)
-    : geometry_config_(config.geometry),
-      camera_calibration_(config.camera_calibration) {}
+    : geometry_config_(config.geometry) {}
 
 PoseRecoveryResult PoseRecovery::RecoverPose(
     const cv::Mat& essential_matrix,
-    const std::vector<cv::Point2f>& previous_points,
-    const std::vector<cv::Point2f>& current_points,
+    const PreparedCorrespondences& correspondences,
     const std::vector<std::uint8_t>& input_inlier_mask) const {
     PoseRecoveryResult result;
 
     if (!AreSupportedPoseRecoveryInputs(essential_matrix,
-                                        previous_points,
-                                        current_points,
+                                        correspondences,
                                         input_inlier_mask,
-                                        camera_calibration_,
                                         geometry_config_)) {
         return result;
     }
@@ -32,13 +28,15 @@ PoseRecoveryResult PoseRecovery::RecoverPose(
     cv::Mat translation;
     cv::Mat refined_mask = ConvertMaskToMat(input_inlier_mask);
 
-    const int recovered_inliers = cv::recoverPose(essential_matrix,
-                                                  previous_points,
-                                                  current_points,
-                                                  BuildCameraMatrix(camera_calibration_),
-                                                  rotation,
-                                                  translation,
-                                                  refined_mask);
+    const int recovered_inliers =
+        cv::recoverPose(essential_matrix,
+                        correspondences.previous_normalized_points,
+                        correspondences.current_normalized_points,
+                        rotation,
+                        translation,
+                        1.0,
+                        cv::Point2d(0.0, 0.0),
+                        refined_mask);
 
     if (recovered_inliers < static_cast<int>(geometry_config_.min_inlier_count)) {
         return result;

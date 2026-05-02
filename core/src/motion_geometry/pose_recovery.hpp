@@ -7,8 +7,8 @@
 #include <Eigen/Core>
 
 #include <opencv2/core/mat.hpp>
-#include <opencv2/core/types.hpp>
 
+#include "estimator/prepared_correspondences.hpp"
 #include <vio/config.hpp>
 
 namespace vio {
@@ -25,17 +25,15 @@ class PoseRecovery {
 public:
     explicit PoseRecovery(const Config& config);
 
-    // previous_points[i], current_points[i], and input_inlier_mask[i] must
-    // refer to the same matched correspondence entry.
+    // The input correspondences are expected to be pre-filtered and already
+    // normalized by the orchestrator measurement-preparation step.
     PoseRecoveryResult RecoverPose(
         const cv::Mat& essential_matrix,
-        const std::vector<cv::Point2f>& previous_points,
-        const std::vector<cv::Point2f>& current_points,
+        const PreparedCorrespondences& correspondences,
         const std::vector<std::uint8_t>& input_inlier_mask) const;
 
 private:
     GeometryConfig geometry_config_{};
-    CameraCalibration camera_calibration_{};
 };
 
 }  // namespace vio

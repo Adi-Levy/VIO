@@ -8,27 +8,23 @@
 namespace vio {
 
 EssentialMatrixSolver::EssentialMatrixSolver(const Config& config)
-    : geometry_config_(config.geometry),
-      camera_calibration_(config.camera_calibration) {}
+    : geometry_config_(config.geometry) {}
 
 EssentialMatrixResult EssentialMatrixSolver::Solve(
-    const std::vector<cv::Point2f>& previous_points,
-    const std::vector<cv::Point2f>& current_points) const {
+    const PreparedCorrespondences& correspondences) const {
     EssentialMatrixResult result;
-    const std::size_t correspondence_count = previous_points.size();
+    const std::size_t correspondence_count = correspondences.Count();
 
-    if (!AreSupportedEssentialMatrixInputs(previous_points,
-                                           current_points,
-                                           camera_calibration_,
-                                           geometry_config_)) {
+    if (!AreSupportedEssentialMatrixInputs(correspondences, geometry_config_)) {
         return result;
     }
 
     cv::Mat inlier_mask;
     result.essential_matrix = cv::findEssentialMat(
-        previous_points,
-        current_points,
-        BuildCameraMatrix(camera_calibration_),
+        correspondences.previous_normalized_points,
+        correspondences.current_normalized_points,
+        1.0,
+        cv::Point2d(0.0, 0.0),
         cv::RANSAC,
         geometry_config_.ransac_confidence,
         geometry_config_.ransac_reprojection_threshold_px,

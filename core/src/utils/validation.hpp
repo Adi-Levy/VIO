@@ -6,6 +6,8 @@
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/types.hpp>
 
+#include "estimator/prepared_correspondences.hpp"
+
 #include <vio/config.hpp>
 
 namespace vio {
@@ -28,20 +30,19 @@ bool ArePointsWithinImageBounds(
     const std::vector<cv::Point2f>& points,
     const PinholeIntrinsics& intrinsics);
 
+bool HasConsistentPreparedCorrespondences(
+    const PreparedCorrespondences& correspondences);
+
 bool AreSupportedEssentialMatrixInputs(
-    const std::vector<cv::Point2f>& previous_points,
-    const std::vector<cv::Point2f>& current_points,
-    const CameraCalibration& camera_calibration,
+    const PreparedCorrespondences& correspondences,
     const GeometryConfig& geometry_config);
 
 bool HasUsableEssentialMatrix(const cv::Mat& essential_matrix);
 
 bool AreSupportedPoseRecoveryInputs(
     const cv::Mat& essential_matrix,
-    const std::vector<cv::Point2f>& previous_points,
-    const std::vector<cv::Point2f>& current_points,
+    const PreparedCorrespondences& correspondences,
     const std::vector<std::uint8_t>& input_inlier_mask,
-    const CameraCalibration& camera_calibration,
     const GeometryConfig& geometry_config);
 
 }  // namespace vio

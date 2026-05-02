@@ -64,25 +64,25 @@ bool ArePointsWithinImageBounds(
     return true;
 }
 
+bool HasConsistentPreparedCorrespondences(
+    const PreparedCorrespondences& correspondences) {
+    return correspondences.success &&
+           correspondences.previous_image_points.size() ==
+               correspondences.current_image_points.size() &&
+           correspondences.previous_image_points.size() ==
+               correspondences.previous_normalized_points.size() &&
+           correspondences.previous_image_points.size() ==
+               correspondences.current_normalized_points.size();
+}
+
 bool AreSupportedEssentialMatrixInputs(
-    const std::vector<cv::Point2f>& previous_points,
-    const std::vector<cv::Point2f>& current_points,
-    const CameraCalibration& camera_calibration,
+    const PreparedCorrespondences& correspondences,
     const GeometryConfig& geometry_config) {
-    if (!HasValidPointCorrespondences(previous_points,
-                                      current_points,
-                                      geometry_config.min_correspondence_count) ||
-        !HasValidCameraIntrinsics(camera_calibration)) {
+    if (!HasConsistentPreparedCorrespondences(correspondences) ||
+        correspondences.Count() < geometry_config.min_correspondence_count) {
         return false;
     }
-
-    if (!geometry_config.require_points_within_image_bounds) {
-        return true;
-    }
-
-    const auto& intrinsics = camera_calibration.intrinsics;
-    return ArePointsWithinImageBounds(previous_points, intrinsics) &&
-           ArePointsWithinImageBounds(current_points, intrinsics);
+    return true;
 }
 
 bool HasUsableEssentialMatrix(const cv::Mat& essential_matrix) {
@@ -93,17 +93,12 @@ bool HasUsableEssentialMatrix(const cv::Mat& essential_matrix) {
 
 bool AreSupportedPoseRecoveryInputs(
     const cv::Mat& essential_matrix,
-    const std::vector<cv::Point2f>& previous_points,
-    const std::vector<cv::Point2f>& current_points,
+    const PreparedCorrespondences& correspondences,
     const std::vector<std::uint8_t>& input_inlier_mask,
-    const CameraCalibration& camera_calibration,
     const GeometryConfig& geometry_config) {
     return HasUsableEssentialMatrix(essential_matrix) &&
-           AreSupportedEssentialMatrixInputs(previous_points,
-                                            current_points,
-                                            camera_calibration,
-                                            geometry_config) &&
-           input_inlier_mask.size() == previous_points.size();
+           AreSupportedEssentialMatrixInputs(correspondences, geometry_config) &&
+           input_inlier_mask.size() == correspondences.Count();
 }
 
 }  // namespace vio

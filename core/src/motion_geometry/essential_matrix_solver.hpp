@@ -5,8 +5,8 @@
 #include <vector>
 
 #include <opencv2/core/mat.hpp>
-#include <opencv2/core/types.hpp>
 
+#include "estimator/prepared_correspondences.hpp"
 #include <vio/config.hpp>
 
 namespace vio {
@@ -22,15 +22,13 @@ class EssentialMatrixSolver {
 public:
     explicit EssentialMatrixSolver(const Config& config);
 
-    // previous_points[i] and current_points[i] must form a matched 2D-2D
-    // correspondence pair. This solver does not perform matching or reorder
-    // the inputs.
-    EssentialMatrixResult Solve(const std::vector<cv::Point2f>& previous_points,
-                                const std::vector<cv::Point2f>& current_points) const;
+    // The input correspondences are expected to be pre-filtered and already
+    // normalized by the orchestrator measurement-preparation step.
+    EssentialMatrixResult Solve(
+        const PreparedCorrespondences& correspondences) const;
 
 private:
     GeometryConfig geometry_config_{};
-    CameraCalibration camera_calibration_{};
 };
 
 }  // namespace vio

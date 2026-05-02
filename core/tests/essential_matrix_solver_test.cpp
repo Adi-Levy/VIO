@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 
+#include "estimator/prepared_correspondences.hpp"
 #include "motion_geometry/essential_matrix_solver.hpp"
+#include "utils/image_utils.hpp"
 
 #include <opencv2/calib3d.hpp>
 
@@ -66,15 +68,29 @@ void GenerateProjectedCorrespondences(const vio::Config& config,
                       *current_points);
 }
 
+vio::PreparedCorrespondences PrepareAllCorrespondences(
+    const vio::Config& config,
+    const std::vector<cv::Point2f>& previous_points,
+    const std::vector<cv::Point2f>& current_points) {
+    return vio::PrepareCorrespondences(previous_points,
+                                       current_points,
+                                       std::vector<std::uint8_t>(previous_points.size(), 1),
+                                       config.camera_calibration,
+                                       config.geometry);
+}
+
 TEST(EssentialMatrixSolverTest, RejectsInsufficientCorrespondences) {
-    const vio::EssentialMatrixSolver solver(MakeGeometryConfig());
+    const vio::Config config = MakeGeometryConfig();
+    const vio::EssentialMatrixSolver solver(config);
 
     const std::vector<cv::Point2f> previous_points{
         {10.0f, 10.0f}, {20.0f, 20.0f}, {30.0f, 20.0f}, {40.0f, 15.0f}};
     const std::vector<cv::Point2f> current_points{
         {12.0f, 11.0f}, {22.0f, 21.0f}, {31.0f, 19.0f}, {41.0f, 16.0f}};
 
-    const auto result = solver.Solve(previous_points, current_points);
+    const auto correspondences =
+        PrepareAllCorrespondences(config, previous_points, current_points);
+    const auto result = solver.Solve(correspondences);
 
     EXPECT_FALSE(result.success);
     EXPECT_TRUE(result.essential_matrix.empty());
@@ -83,7 +99,8 @@ TEST(EssentialMatrixSolverTest, RejectsInsufficientCorrespondences) {
 }
 
 TEST(EssentialMatrixSolverTest, RejectsOutOfBoundsCorrespondencesWhenEnabled) {
-    const vio::EssentialMatrixSolver solver(MakeGeometryConfig());
+    const vio::Config config = MakeGeometryConfig();
+    const vio::EssentialMatrixSolver solver(config);
 
     const std::vector<cv::Point2f> previous_points{
         {10.0f, 10.0f}, {20.0f, 20.0f}, {30.0f, 20.0f},
@@ -92,7 +109,9 @@ TEST(EssentialMatrixSolverTest, RejectsOutOfBoundsCorrespondencesWhenEnabled) {
         {12.0f, 11.0f}, {22.0f, 21.0f}, {31.0f, 19.0f},
         {641.0f, 16.0f}, {52.0f, 24.0f}};
 
-    const auto result = solver.Solve(previous_points, current_points);
+    const auto correspondences =
+        PrepareAllCorrespondences(config, previous_points, current_points);
+    const auto result = solver.Solve(correspondences);
 
     EXPECT_FALSE(result.success);
     EXPECT_TRUE(result.essential_matrix.empty());
@@ -107,10 +126,12 @@ TEST(EssentialMatrixSolverTest, EstimatesEssentialMatrixForValidCorrespondences)
     GenerateProjectedCorrespondences(config, &previous_points, &current_points);
 
     const vio::EssentialMatrixSolver solver(config);
-    const auto result = solver.Solve(previous_points, current_points);
+    const auto correspondences =
+        PrepareAllCorrespondences(config, previous_points, current_points);
+    const auto result = solver.Solve(correspondences);
 
     ASSERT_TRUE(result.success);
-    EXPECT_EQ(result.inlier_mask.size(), previous_points.size());
+    EXPECT_EQ(result.inlier_mask.size(), correspondences.Count());
     EXPECT_GE(result.inlier_count, config.geometry.min_inlier_count);
     EXPECT_EQ(result.essential_matrix.rows, 3);
     EXPECT_EQ(result.essential_matrix.cols, 3);
@@ -128,7 +149,9 @@ TEST(EssentialMatrixSolverTest, RejectsMissingCameraIntrinsics) {
         {12.0f, 11.0f}, {22.0f, 21.0f}, {31.0f, 19.0f},
         {41.0f, 16.0f}, {52.0f, 24.0f}};
 
-    const auto result = solver.Solve(previous_points, current_points);
+    const auto correspondences =
+        PrepareAllCorrespondences(config, previous_points, current_points);
+    const auto result = solver.Solve(correspondences);
 
     EXPECT_FALSE(result.success);
     EXPECT_TRUE(result.essential_matrix.empty());

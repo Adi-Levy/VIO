@@ -1,7 +1,9 @@
 #include <gtest/gtest.h>
 
+#include "estimator/prepared_correspondences.hpp"
 #include "motion_geometry/essential_matrix_solver.hpp"
 #include "motion_geometry/pose_recovery.hpp"
+#include "utils/image_utils.hpp"
 
 #include <opencv2/calib3d.hpp>
 
@@ -67,18 +69,31 @@ void GenerateProjectedCorrespondences(const vio::Config& config,
                       *current_points);
 }
 
+vio::PreparedCorrespondences PrepareAllCorrespondences(
+    const vio::Config& config,
+    const std::vector<cv::Point2f>& previous_points,
+    const std::vector<cv::Point2f>& current_points) {
+    return vio::PrepareCorrespondences(previous_points,
+                                       current_points,
+                                       std::vector<std::uint8_t>(previous_points.size(), 1),
+                                       config.camera_calibration,
+                                       config.geometry);
+}
+
 TEST(PoseRecoveryTest, RejectsEmptyEssentialMatrix) {
-    const vio::PoseRecovery recovery(MakeGeometryConfig());
+    const vio::Config config = MakeGeometryConfig();
+    const vio::PoseRecovery recovery(config);
     const std::vector<cv::Point2f> previous_points{
         {10.0f, 10.0f}, {20.0f, 20.0f}, {30.0f, 20.0f},
         {40.0f, 15.0f}, {50.0f, 25.0f}};
     const std::vector<cv::Point2f> current_points{
         {12.0f, 11.0f}, {22.0f, 21.0f}, {31.0f, 19.0f},
         {41.0f, 16.0f}, {52.0f, 24.0f}};
-    const std::vector<std::uint8_t> inlier_mask(previous_points.size(), 1);
+    const auto correspondences =
+        PrepareAllCorrespondences(config, previous_points, current_points);
+    const std::vector<std::uint8_t> inlier_mask(correspondences.Count(), 1);
 
-    const auto result =
-        recovery.RecoverPose(cv::Mat{}, previous_points, current_points, inlier_mask);
+    const auto result = recovery.RecoverPose(cv::Mat{}, correspondences, inlier_mask);
 
     EXPECT_FALSE(result.success);
     EXPECT_EQ(result.inlier_count, 0U);
@@ -86,20 +101,21 @@ TEST(PoseRecoveryTest, RejectsEmptyEssentialMatrix) {
 }
 
 TEST(PoseRecoveryTest, RejectsMismatchedMaskSize) {
-    const vio::PoseRecovery recovery(MakeGeometryConfig());
+    const vio::Config config = MakeGeometryConfig();
+    const vio::PoseRecovery recovery(config);
     const std::vector<cv::Point2f> previous_points{
         {10.0f, 10.0f}, {20.0f, 20.0f}, {30.0f, 20.0f},
         {40.0f, 15.0f}, {50.0f, 25.0f}};
     const std::vector<cv::Point2f> current_points{
         {12.0f, 11.0f}, {22.0f, 21.0f}, {31.0f, 19.0f},
         {41.0f, 16.0f}, {52.0f, 24.0f}};
+    const auto correspondences =
+        PrepareAllCorrespondences(config, previous_points, current_points);
     const std::vector<std::uint8_t> inlier_mask{1, 1, 1, 1};
     const cv::Mat essential_matrix = cv::Mat::eye(3, 3, CV_64F);
 
-    const auto result = recovery.RecoverPose(essential_matrix,
-                                             previous_points,
-                                             current_points,
-                                             inlier_mask);
+    const auto result =
+        recovery.RecoverPose(essential_matrix, correspondences, inlier_mask);
 
     EXPECT_FALSE(result.success);
     EXPECT_EQ(result.inlier_count, 0U);
@@ -111,19 +127,20 @@ TEST(PoseRecoveryTest, RecoversPoseFromValidSyntheticCorrespondences) {
     std::vector<cv::Point2f> previous_points;
     std::vector<cv::Point2f> current_points;
     GenerateProjectedCorrespondences(config, &previous_points, &current_points);
+    const auto correspondences =
+        PrepareAllCorrespondences(config, previous_points, current_points);
 
     const vio::EssentialMatrixSolver solver(config);
-    const auto essential_result = solver.Solve(previous_points, current_points);
+    const auto essential_result = solver.Solve(correspondences);
     ASSERT_TRUE(essential_result.success);
 
     const vio::PoseRecovery recovery(config);
     const auto pose_result = recovery.RecoverPose(essential_result.essential_matrix,
-                                                  previous_points,
-                                                  current_points,
+                                                  correspondences,
                                                   essential_result.inlier_mask);
 
     ASSERT_TRUE(pose_result.success);
-    EXPECT_EQ(pose_result.refined_inlier_mask.size(), previous_points.size());
+    EXPECT_EQ(pose_result.refined_inlier_mask.size(), correspondences.Count());
     EXPECT_GE(pose_result.inlier_count, config.geometry.min_inlier_count);
     EXPECT_NEAR(pose_result.R_1_2.determinant(), 1.0, 1e-6);
     EXPECT_NEAR(pose_result.t_hat_1_2.norm(), 1.0, 1e-6);
